@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nearly — Encuentra Talento Local</title>
+    <meta name="description" content="Directorio local de servicios y conexiones reales cerca de ti. Sin fricción.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <div id="app">
+        <!-- View Container -->
+        <main id="main-view"></main>
+        
+        <!-- Navigation (Hidden during onboarding) -->
+        <nav id="main-nav" class="hidden">
+            <button class="nav-item active" data-view="discovery">
+                <span class="icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <span class="label">Explorar</span>
+            </button>
+            <button class="nav-item" data-view="connections">
+                <span class="icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </span>
+                <span class="label">Conexiones</span>
+            </button>
+            <button class="nav-item" data-view="profile">
+                <span class="icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </span>
+                <span class="label">Mi Perfil</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Templates for Views -->
+    <template id="view-welcome">
+        <div class="view-content welcome-screen">
+            <div class="hero-content">
+                <div class="logo-accent">Ny</div>
+                <h1>Encuentra talento real <br><em>cerca de ti</em></h1>
+                <p>Conecta con profesionales locales, colabora y crece sin complicaciones.</p>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="app.navigate('register')">Crear perfil</button>
+                <button class="btn btn-ghost" onclick="app.navigate('discovery')">Explorar sin cuenta</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="view-register">
+        <div class="view-content">
+            <header class="step-header">
+                <button class="btn-back" onclick="app.navigate('welcome')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <div class="progress-bar"><div class="progress" style="width: 25%"></div></div>
+            </header>
+            <h2>Registro básico</h2>
+            <p class="subtitle">Solo necesitamos lo esencial para empezar.</p>
+            
+            <form id="form-register" onsubmit="onboarding.handleRegister(event)">
+                <div class="form-group">
+                    <label>Teléfono (WhatsApp)</label>
+                    <input type="tel" id="reg-phone" placeholder="10 dígitos" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre profesional o Negocio</label>
+                    <input type="text" id="reg-alias" placeholder="Ej: DJ Norte o Juan Pérez" required>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="reg-terms" required>
+                    <label for="reg-terms">Acepto los <a href="#">Términos</a> y el <a href="#">Aviso de Privacidad</a></label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Siguiente</button>
+            </form>
+        </div>
+    </template>
+
+    <!-- Step 3: Location -->
+    <template id="view-location">
+        <div class="view-content">
+            <header class="step-header">
+                <button class="btn-back" onclick="app.navigate('register')">←</button>
+                <div class="progress-bar"><div class="progress" style="width: 50%"></div></div>
+            </header>
+            <h2>Tu ubicación</h2>
+            <p class="subtitle">Mostramos tu perfil a personas cerca de ti.</p>
+            
+            <div class="location-prompt">
+                <div class="loc-icon">
+                    <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="1.5" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <button class="btn btn-primary" onclick="onboarding.requestLocation()">Usar ubicación actual</button>
+                <div class="divider"><span>o elige un radio</span></div>
+                <div class="radio-grid">
+                    <button class="btn-option" onclick="onboarding.setLocationRange(5)">5 km</button>
+                    <button class="btn-option" onclick="onboarding.setLocationRange(10)">10 km</button>
+                    <button class="btn-option" onclick="onboarding.setLocationRange(25)">25 km</button>
+                    <button class="btn-option" onclick="onboarding.setLocationRange(100)">100 km</button>
+                    <button class="btn-option" onclick="onboarding.setLocationRange('all')">Todo el país</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Step 4: Profile Base -->
+    <template id="view-profile-setup">
+        <div class="view-content">
+            <header class="step-header">
+                <button class="btn-back" onclick="app.navigate('location')">←</button>
+                <div class="progress-bar"><div class="progress" style="width: 75%"></div></div>
+            </header>
+            <h2>Casi listo</h2>
+            <p class="subtitle">Define cómo quieres que te encuentren.</p>
+            
+            <form id="form-profile" onsubmit="onboarding.handleProfileSetup(event)">
+                <div class="form-group">
+                    <label>Categoría principal</label>
+                    <select id="prof-category" required>
+                        <option value="">Selecciona una...</option>
+                        <option value="dj">DJ / Música</option>
+                        <option value="designer">Diseñador / Creativo</option>
+                        <option value="lawyer">Abogado / Legal</option>
+                        <option value="fitness">Fitness / Coach</option>
+                        <option value="developer">Programador / Tech</option>
+                        <option value="other">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción corta</label>
+                    <textarea id="prof-desc" maxlength="200" placeholder="¿Qué ofreces? (máx 200 car.)" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Mi intención actual</label>
+                    <div class="intent-select">
+                        <label class="intent-opt">
+                            <input type="radio" name="intent" value="clients" checked>
+                            <span>Busco clientes</span>
+                        </label>
+                        <label class="intent-opt">
+                            <input type="radio" name="intent" value="collab">
+                            <span>Busco colaborar</span>
+                        </label>
+                        <label class="intent-opt">
+                            <input type="radio" name="intent" value="available">
+                            <span>Solo disponible</span>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Completar perfil</button>
+            </form>
+        </div>
+    </template>
+
+    <!-- Main Views -->
+    <template id="view-discovery">
+        <div class="view-content discovery-screen">
+            <header class="home-header">
+                <div class="top-row">
+                    <h2 class="brand">Nearly</h2>
+                    <button class="btn-filter" onclick="discovery.toggleFilters()">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                    </button>
+                </div>
+                <div class="location-bar">
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </span>
+                    <span id="current-location-label">Cerca de ti...</span>
+                </div>
+                
+                <!-- Quick Filters -->
+                <div id="filter-drawer" class="filter-drawer hidden">
+                    <div class="filter-group">
+                        <label>Categoría</label>
+                        <div class="pill-grid" id="filter-categories">
+                            <button class="pill active" data-cat="all">Todo</button>
+                            <button class="pill" data-cat="Dogos">Dogos</button>
+                            <button class="pill" data-cat="Pizzas">Pizzas</button>
+                            <button class="pill" data-cat="Sushi">Sushi</button>
+                            <button class="pill" data-cat="Tacos">Tacos</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Distancia Máxima: <span id="dist-val">25</span> km</label>
+                        <input type="range" min="5" max="100" value="25" class="range-slider" oninput="discovery.setDistance(this.value)">
+                    </div>
+                </div>
+            </header>
+            
+            <div id="feed-container" class="feed">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="view-profile-detail">
+        <div class="view-content profile-detail-screen">
+            <header class="step-header">
+                <button class="btn-back" onclick="app.navigate('discovery')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <div class="header-actions">
+                    <button class="btn-share">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                    </button>
+                </div>
+            </header>
+            
+            <div id="profile-detail-content">
+                <!-- Content injected by profile.js -->
+                <div class="profile-hero">
+                    <div class="profile-avatar large">Ny</div>
+                    <h2 id="det-alias">Cargando...</h2>
+                    <span id="det-category" class="category-badge">CATEGORÍA</span>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="val">4.8</span>
+                        <span class="lab">Rating</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="val" id="det-connections">12</span>
+                        <span class="lab">Conexiones</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="val" id="det-distance">0.0 km</span>
+                        <span class="lab">Distancia</span>
+                    </div>
+                </div>
+
+                <div class="profile-info">
+                    <h3>Sobre mí</h3>
+                    <p id="det-description"></p>
+                    
+                    <div class="tags-row" id="det-tags">
+                        <!-- Tags injected -->
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn btn-primary btn-block" onclick="profile.requestConnection()">Solicitar conexión</button>
+                    <button class="btn btn-ghost btn-block" onclick="profile.sendMessageToWhatsapp()">WhatsApp Directo</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="seeds.js"></script>
+    <script src="app.js"></script>
+    <script src="onboarding.js"></script>
+    <script src="discovery.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>
