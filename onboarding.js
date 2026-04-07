@@ -1,8 +1,9 @@
 /**
- * Nearly — Onboarding & Persistence Logic
+ * Nearly — Onboarding Elite v1.5
+ * Localizing Talent & Services in Hermosillo
  */
 
-const onboarding = {
+window.onboarding = {
     state: {
         tempUser: {},
         neighborhoods: {
@@ -21,75 +22,61 @@ const onboarding = {
         }
     },
 
-    handleRegister(e) {
-        e.preventDefault();
-        const phone = document.getElementById('reg-phone').value;
-        const alias = document.getElementById('reg-alias').value;
-
-        this.state.tempUser = { 
-            phone, 
-            alias,
-            createdAt: new Date().toISOString()
-        };
-        
-        app.navigate('location');
-    },
-
     setNeighborhood(val) {
         if (!val) return;
         const coords = this.state.neighborhoods[val];
         // Apply random shift +/- 250m for security
-        const shiftLat = (Math.random() - 0.5) * 0.0045; // ~250m
-        const shiftLng = (Math.random() - 0.5) * 0.0045; // ~250m
+        const shiftLat = (Math.random() - 0.5) * 0.0045; 
+        const shiftLng = (Math.random() - 0.5) * 0.0045; 
         
-        this.state.tempUser.location = {
+        app.state.location = {
             latitude: coords.latitude + shiftLat,
             longitude: coords.longitude + shiftLng,
             neighborhood: val
         };
+        
+        // Persist location locally immediately
+        localStorage.setItem('nearly_location', JSON.stringify(app.state.location));
     },
 
     saveLocationStep() {
-        if (!this.state.tempUser.location) {
+        if (!app.state.location) {
             app.showToast('Por favor selecciona una zona', 'warning');
             return;
         }
-        app.navigate('profile-setup');
+        
+        app.showToast('¡Zona guardada!', 'success');
+        app.navigate('discovery');
     },
 
     async handleProfileSetup(e) {
         e.preventDefault();
-        const category = document.getElementById('prof-category').value;
-        const description = document.getElementById('prof-desc').value;
-        const intention = document.querySelector('input[name="intent"]:checked').value;
+        const alias = document.getElementById('reg-alias')?.value;
+        const category = document.getElementById('prof-category')?.value;
+        const description = document.getElementById('prof-desc')?.value;
+        const intention = document.querySelector('input[name="intent"]:checked')?.value;
 
         const finalUser = {
-            ...this.state.tempUser,
+            alias,
             category,
             description,
             intention,
+            location: app.state.location,
+            createdAt: new Date().toISOString(),
             isAutoLoaded: false
         };
 
         try {
             if (window.db) {
-                // Save to Firestore
                 const docRef = await window.db.collection('talentos').add(finalUser);
-                finalUser.id = docRef.id;
                 localStorage.setItem('nearly_uid', docRef.id);
-            } else {
-                console.warn('Firestore not initialized. Saving locally.');
-                finalUser.id = 'temp-' + Date.now();
-                localStorage.setItem('nearly_uid', finalUser.id);
+                app.state.user = { id: docRef.id, ...finalUser };
             }
-
-            app.state.user = finalUser;
-            app.state.isAuth = true;
+            app.showToast('¡Perfil Creado!');
             app.navigate('discovery');
-            app.showToast('¡Bienvenido a Nearly!');
         } catch (err) {
             console.error('Error saving profile:', err);
-            app.showToast('Error al guardar perfil. Intenta de nuevo.', 'error');
+            app.showToast('Error al guardar.', 'error');
         }
     }
 };
