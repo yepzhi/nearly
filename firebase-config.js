@@ -1,0 +1,1 @@
+window.firebaseConfig = AIzaSyCfE8ZzdILS4QZEUwRFYHXM3gVs9lwt6VU;

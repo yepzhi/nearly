@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nearly — Encuentra Talento Local</title>
+    <meta name="description" content="Directorio local de servicios y conexiones reales cerca de ti en Hermosillo.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css?v=1.5.1">
+    <script>window.NEOSYS_SITE_ID = 'nearly';</script>
+    <script src="/visitors/tracker.js"></script>
+</head>
+<body class="dark-theme">
+    <!-- Initial Black Reveal (Yepzhi Style) -->
+    <div class="revealer" id="page-revealer">
+        <h1 class="logo-elite">Nearly</h1>
+    </div>
+
+    <div id="app">
+        <!-- Floating Glass Header -->
+        <header class="glass-header hidden" id="main-header">
+            <div class="header-inner">
+                <h2 class="brand" onclick="app.navigate('discovery')">Nearly <span class="brand-sub">by yepzhi</span></h2>
+                <div class="header-right">
+                    <button class="btn btn-silver" onclick="app.navigate('profile-setup')" style="padding: 8px 16px; font-size: 11px;">+ Unirte</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- View Container -->
+        <main id="main-view"></main>
+        
+        <!-- Floating Pill Navigation -->
+        <nav id="main-nav" class="hidden">
+            <button class="nav-item active" data-view="discovery">
+                <span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <span class="label">Explorar</span>
+            </button>
+            <button class="nav-item" data-view="connections">
+                <span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <span class="label">Chat</span>
+            </button>
+            <button class="nav-item" data-view="profile">
+                <span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                <span class="label">Yo</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Templates -->
+    
+    <!-- Welcome Screen (Location Overlay FIRST) -->
+    <template id="view-welcome">
+        <div class="welcome-hero">
+            <div class="glass-card" style="padding: 40px; margin: 20px; text-align: center; border-color: var(--gold);">
+                <h1 style="margin-bottom: 24px;">Encuentra talento <gold>cerca de ti</gold></h1>
+                <p class="subtitle" style="margin-bottom: 32px;">Tu portal local de servicios y conexiones en Hermosillo.</p>
+                
+                <div class="form-group" style="text-align: left;">
+                    <label>¿En qué zona estás?</label>
+                    <select id="welcome-neighborhood" class="glass-input" onchange="onboarding.setNeighborhood(this.value)">
+                        <option value="">Selecciona tu colonia...</option>
+                        <option value="pitic">Pitic</option>
+                        <option value="san-benito">San Benito</option>
+                        <option value="villa-de-seris">Villa de Seris</option>
+                        <option value="rio-sonora">Proyecto Río Sonora</option>
+                        <option value="modelo">Colonia Modelo</option>
+                        <option value="centenario">Centenario</option>
+                        <option value="balderrama">Balderrama</option>
+                        <option value="sahuaro">Sahuaro</option>
+                        <option value="puerta-real">Puerta Real</option>
+                        <option value="la-joya">La Joya</option>
+                        <option value="los-lagos">Los Lagos</option>
+                        <option value="valle-grande">Valle Grande</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="text-align: left; margin-bottom: 24px;">
+                    <label>¿Qué tipo de perfil eres?</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="btn btn-silver active" id="type-talent" onclick="onboarding.setType('talent')">Talento</button>
+                        <button class="btn btn-silver" id="type-business" onclick="onboarding.setType('business')">Negocio</button>
+                    </div>
+                </div>
+                
+                <p class="security-note" id="welcome-privacy-note">✦ Ubicación aproximada ±250m por seguridad.</p>
+                
+                <div class="actions" style="margin-top: 24px;">
+                    <button class="btn btn-primary btn-block" onclick="onboarding.saveLocationStep()">Descubrir Talento</button>
+                    <p style="margin-top: 20px; font-size: 11px; opacity: 0.5;">Nearly <em>by yepzhi</em> 2026</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Main Feed (LOT Skeleton) -->
+    <template id="view-discovery">
+        <div class="view-content discovery-screen">
+            <section class="hero" style="padding: 40px 0 20px; text-align: center;">
+                <h1 style="margin-bottom: 12px;">Nearly</h1>
+                <p class="subtitle">Talento real. Conexiones locales. Hermosillo.</p>
+                
+                <!-- Search Bar (Glass) -->
+                <div class="search-wrap" style="margin-top: 24px; position: relative;">
+                    <input type="text" id="searchInput" placeholder="Busca talentos, comida o servicios..." class="glass" style="padding-left: 50px;">
+                    <div style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--gold);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pill Categories (Glass) -->
+            <div class="cats-row" style="display: flex; gap: 8px; overflow-x: auto; padding: 12px 0; margin-bottom: 30px;">
+                <button class="btn btn-silver active" data-cat="all" style="padding: 8px 20px; font-size: 12px;">Todos</button>
+                <button class="btn btn-ghost" data-cat="Dogos" style="padding: 8px 20px; font-size: 12px;">Dogos</button>
+                <button class="btn btn-ghost" data-cat="Pizzas" style="padding: 8px 20px; font-size: 12px;">Pizzas</button>
+                <button class="btn btn-ghost" data-cat="Sushi" style="padding: 8px 20px; font-size: 12px;">Sushi</button>
+                <button class="btn btn-ghost" data-cat="Tacos" style="padding: 8px 20px; font-size: 12px;">Tacos</button>
+            </div>
+
+            <!-- Feed Grid -->
+            <div id="feed-container" class="feed">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="view-profile-detail">
+        <div class="view-content profile-detail-screen" style="max-width: 600px;">
+            <div class="glass-card" style="padding: 40px; margin-top: 20px;">
+                <button class="btn btn-ghost" onclick="app.navigate('discovery')" style="margin-bottom: 24px; padding: 10px;">← Volver</button>
+                
+                <div class="profile-hero" style="text-align: center;">
+                    <div class="card-avatar" id="det-avatar" style="width: 100px; height: 100px; margin: 0 auto 20px; font-size: 32px;">N</div>
+                    <h2 id="det-alias" style="font-size: 28px; color: var(--gold);">Cargando...</h2>
+                    <p id="det-category" class="card-cat" style="margin-bottom: 24px;">CATEGORÍA</p>
+                    
+                    <div class="glass" style="display: flex; justify-content: space-around; padding: 20px; border-radius: var(--r); margin-bottom: 30px;">
+                        <div class="stat">
+                            <p style="font-size: 20px; font-weight: 800; color: var(--gold);">4.8</p>
+                            <p style="font-size: 10px; color: var(--text-muted);">Rating</p>
+                        </div>
+                        <div class="stat">
+                            <p style="font-size: 20px; font-weight: 800;" id="det-distance">---</p>
+                            <p style="font-size: 10px; color: var(--text-muted);">Distancia</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: left;">
+                        <h3 style="font-size: 14px; color: var(--gold); margin-bottom: 8px; text-transform: uppercase;">Experiencia</h3>
+                        <p id="det-description" style="line-height: 1.6; color: var(--text-muted); margin-bottom: 30px;"></p>
+                        
+                        <div class="actions" id="det-actions-container">
+                            <!-- Injected: Maps Button (Business) OR Privacy Note (Talent) -->
+                        </div>
+                        
+                        <div class="actions" style="margin-top: 12px;">
+                            <button class="btn btn-primary btn-block" onclick="profile.sendMessageToWhatsapp()">WhatsApp Directo ✦</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js?v=1.5.1"></script>
+    <script src="seeds.js?v=1.5.1"></script>
+    <script src="app.js?v=1.5.1"></script>
+    <script src="onboarding.js?v=1.5.1"></script>
+    <script src="discovery.js?v=1.5.1"></script>
+    <script src="profile.js?v=1.5.1"></script>
+</body>
+</html>
+\n// Elite v1.5.4 - Clean Security Final
