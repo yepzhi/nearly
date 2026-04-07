@@ -1,0 +1,28 @@
+name: Deploy Nearly to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Inject Firebase Config 🔐
+        run: |
+          echo "const firebaseConfig = ${{ secrets.FIREBASE_CONFIG }};" > firebase-api-config.js
+          echo "export default firebaseConfig;" >> firebase-api-config.js
+          # Also create a non-module version for simple script inclusion if needed
+          echo "window.firebaseConfig = ${{ secrets.FIREBASE_CONFIG }};" > firebase-config.js
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # The folder the action should deploy.
+          branch: gh-pages # The branch the action should deploy to.

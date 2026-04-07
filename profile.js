@@ -1,10 +1,10 @@
 /**
- * Nearly — Profile Detail & Connections Logic
+ * Nearly — Profile Detail & Connections Logic (v1.4)
  */
 
-const profile = {
+window.profile = {
     state: {
-        currentUser: null
+        currentProfile: null
     },
 
     init(userId) {
@@ -13,23 +13,27 @@ const profile = {
     },
 
     async fetchUser(userId) {
-        // In a real app, this would fetch from Firestore
-        // For now, we search in discovery's allUsers or use mock
-        let user = discovery.state.allUsers.find(u => u.id === userId);
-        
-        if (!user) {
-            // Check if it's in mock data
-            user = [
-                { id: '1', alias: 'DJ Norte', phone: '521234567890', category: 'DJ', description: 'Beats electrónicos para eventos locales.', intention: 'clients', location: { latitude: 29.07, longitude: -110.95 } },
-                { id: '2', alias: 'Arq. Creative', phone: '521234567891', category: 'Designer', description: 'Diseño de interiores y renders 3D.', intention: 'collab', location: { latitude: 29.08, longitude: -110.96 } }
-            ].find(u => u.id === userId);
+        // Attempt Firestore first
+        try {
+            if (window.db) {
+                const doc = await window.db.collection('talentos').doc(userId).get();
+                if (doc.exists) {
+                    this.state.currentProfile = { id: doc.id, ...doc.data() };
+                    this.renderDetail(this.state.currentProfile);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.warn('Firestore fetch failed, falling back to Seeds.');
         }
 
-        if (user) {
-            this.state.currentUser = user;
-            this.renderDetail(user);
+        // Fallback to SEED_DATA (100 real Hermosillo businesses)
+        const seedUser = (typeof SEED_DATA !== 'undefined') ? SEED_DATA.find(u => u.id === userId) : null;
+        if (seedUser) {
+            this.state.currentProfile = seedUser;
+            this.renderDetail(seedUser);
         } else {
-            console.error('User not found');
+            console.error('Profile not found:', userId);
             app.navigate('discovery');
         }
     },
@@ -41,13 +45,14 @@ const profile = {
         
         const distance = discovery.calculateDistance(user.location);
         document.getElementById('det-distance').textContent = distance !== null ? `${distance.toFixed(1)} km` : '---';
-
-        // Mock stats/tags
-        document.getElementById('det-connections').textContent = Math.floor(Math.random() * 50);
+        
+        // Dynamic stats
+        document.getElementById('det-connections').textContent = user.rating || '4.5';
         
         const tagsContainer = document.getElementById('det-tags');
         tagsContainer.innerHTML = '';
-        ['Experto', 'Verificado', 'Local'].forEach(tag => {
+        const labels = user.isAutoLoaded ? ['Establecimiento', 'Verificado', 'Pionero'] : ['Talento Local', 'Disponible', 'Cerca'];
+        labels.forEach(tag => {
             const span = document.createElement('span');
             span.className = 'category-badge';
             span.style.background = 'rgba(255,255,255,0.05)';
@@ -57,40 +62,16 @@ const profile = {
         });
     },
 
-    async requestConnection() {
-        if (!app.state.isAuth) {
-            app.showToast('Registrate para conectar', 'warning');
-            app.navigate('register');
+    sendMessageToWhatsapp() {
+        const user = this.state.currentProfile;
+        if (!user || !user.phone) {
+            app.showToast('Número no disponible', 'error');
             return;
         }
-
-        const targetUser = this.state.currentUser;
-        console.log('Requesting connection to:', targetUser.alias);
         
-        try {
-            if (app.db) {
-                await app.db.collection('connections').add({
-                    from: app.state.user.id,
-                    to: targetUser.id,
-                    status: 'pending',
-                    timestamp: firebase.firestore.Timestamp.now()
-                });
-            }
-            
-            app.showToast(`Solicitud enviada a ${targetUser.alias}`);
-            // Logic for gate validation (Future phase)
-        } catch (err) {
-            console.error('Connection request failed:', err);
-            app.showToast('Error al conectar. Revisa tu conexión.', 'error');
-        }
-    },
-
-    sendMessageToWhatsapp() {
-        const user = this.state.currentUser;
-        if (!user || !user.phone) return;
-        
-        const msg = `Hola ${user.alias}, te vi en Nearly y me gustaría conectar contigo.`;
-        const url = `https://wa.me/${user.phone}?text=${encodeURIComponent(msg)}`;
+        const cleanPhone = user.phone.replace(/\D/g, ''); // Ensure digits only
+        const msg = `Hola ${user.alias}, te vi en Nearly y me interesa tu servicio.`;
+        const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
     }
 };

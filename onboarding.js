@@ -1,114 +1,95 @@
 /**
- * Nearly — Onboarding Logic
+ * Nearly — Onboarding & Persistence Logic
  */
 
 const onboarding = {
-    data: {
-        phone: '',
-        alias: '',
-        lat: null,
-        lng: null,
-        category: '',
-        description: '',
-        intention: 'clients',
-        phoneVerified: false,
-        createdAt: null
+    state: {
+        tempUser: {},
+        neighborhoods: {
+            'pitic': { latitude: 29.088, longitude: -110.945 },
+            'san-benito': { latitude: 29.092, longitude: -110.958 },
+            'villa-de-seris': { latitude: 29.055, longitude: -110.940 },
+            'rio-sonora': { latitude: 29.070, longitude: -110.955 },
+            'modelo': { latitude: 29.090, longitude: -110.951 },
+            'centenario': { latitude: 29.082, longitude: -110.954 },
+            'balderrama': { latitude: 29.098, longitude: -110.970 },
+            'sahuaro': { latitude: 29.095, longitude: -110.990 },
+            'puerta-real': { latitude: 29.120, longitude: -110.975 },
+            'la-joya': { latitude: 29.115, longitude: -110.965 },
+            'los-lagos': { latitude: 29.085, longitude: -110.995 },
+            'valle-grande': { latitude: 29.090, longitude: -111.005 }
+        }
     },
 
-    handleRegister(event) {
-        event.preventDefault();
+    handleRegister(e) {
+        e.preventDefault();
         const phone = document.getElementById('reg-phone').value;
         const alias = document.getElementById('reg-alias').value;
-        const terms = document.getElementById('reg-terms').checked;
 
-        if (!phone || !alias || !terms) {
-            console.error('Missing fields');
-            return;
-        }
-
-        this.data.phone = phone;
-        this.data.alias = alias;
-        this.data.createdAt = firebase.firestore.Timestamp.now();
-
-        console.log('Register Step Complete:', this.data);
+        this.state.tempUser = { 
+            phone, 
+            alias,
+            createdAt: new Date().toISOString()
+        };
+        
         app.navigate('location');
     },
 
-    requestLocation() {
-        if (!navigator.geolocation) {
-            console.error('Geolocation not supported');
-            this.setLocationRange(100); // Default fallback
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                this.data.lat = pos.coords.latitude;
-                this.data.lng = pos.coords.longitude;
-                console.log('Location Found:', this.data.lat, this.data.lng);
-                app.navigate('profile-setup');
-            },
-            (err) => {
-                console.warn('Geolocation Error:', err);
-                app.navigate('profile-setup'); // Continue even if failed
-            }
-        );
+    setNeighborhood(val) {
+        if (!val) return;
+        const coords = this.state.neighborhoods[val];
+        // Apply random shift +/- 250m for security
+        const shiftLat = (Math.random() - 0.5) * 0.0045; // ~250m
+        const shiftLng = (Math.random() - 0.5) * 0.0045; // ~250m
+        
+        this.state.tempUser.location = {
+            latitude: coords.latitude + shiftLat,
+            longitude: coords.longitude + shiftLng,
+            neighborhood: val
+        };
     },
 
-    setLocationRange(range) {
-        console.log('Setting Manual Range:', range);
-        // In a real app, we'd prompt for a city if no lat/lng, 
-        // but for MVP we'll just log it and move forward.
-        this.data.range = range;
+    saveLocationStep() {
+        if (!this.state.tempUser.location) {
+            app.showToast('Por favor selecciona una zona', 'warning');
+            return;
+        }
         app.navigate('profile-setup');
     },
 
-    handleProfileSetup(event) {
-        event.preventDefault();
+    async handleProfileSetup(e) {
+        e.preventDefault();
         const category = document.getElementById('prof-category').value;
         const description = document.getElementById('prof-desc').value;
         const intention = document.querySelector('input[name="intent"]:checked').value;
 
-        if (!category || !description) {
-            console.error('Missing profile fields');
-            return;
-        }
+        const finalUser = {
+            ...this.state.tempUser,
+            category,
+            description,
+            intention,
+            isAutoLoaded: false
+        };
 
-        this.data.category = category;
-        this.data.description = description;
-        this.data.intention = intention;
-
-        this.completeOnboarding();
-    },
-
-    async completeOnboarding() {
-        console.log('Completing Onboarding...', this.data);
-        
         try {
-            // Check if Firebase is init
-            if (!app.db) {
-                console.error('Firebase DB not initialized. Check app.js config.');
-                throw new Error('Firebase Connection Missing');
+            if (window.db) {
+                // Save to Firestore
+                const docRef = await window.db.collection('talentos').add(finalUser);
+                finalUser.id = docRef.id;
+                localStorage.setItem('nearly_uid', docRef.id);
+            } else {
+                console.warn('Firestore not initialized. Saving locally.');
+                finalUser.id = 'temp-' + Date.now();
+                localStorage.setItem('nearly_uid', finalUser.id);
             }
 
-            // Store in Firestore
-            const docRef = await app.db.collection('users').add({
-                ...this.data,
-                location: this.data.lat ? new firebase.firestore.GeoPoint(this.data.lat, this.data.lng) : null
-            });
-
-            console.log('User created with ID:', docRef.id);
-            localStorage.setItem('nearly_uid', docRef.id);
-            
-            app.state.user = { id: docRef.id, ...this.data };
+            app.state.user = finalUser;
             app.state.isAuth = true;
-
             app.navigate('discovery');
-            // Refresh feed logic can be triggered by viewChanged event
+            app.showToast('¡Bienvenido a Nearly!');
         } catch (err) {
-            console.error('Error saving user:', err);
-            // Fallback for local testing if Firebase is not yet configured
-            app.navigate('discovery');
+            console.error('Error saving profile:', err);
+            app.showToast('Error al guardar perfil. Intenta de nuevo.', 'error');
         }
     }
 };

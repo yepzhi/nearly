@@ -1,105 +1,98 @@
 /**
- * Nearly — Core App Logic
+ * Nearly — Core App Logic (v1.4)
  */
 
-const app = {
+window.app = {
     state: {
         currentView: 'welcome',
-        user: null, // Temporary user data during onboarding
-        location: null,
-        isAuth: false
+        user: null,
+        isAuth: false,
+        location: null // { lat, lng }
     },
 
-    init() {
+    async init() {
         console.log('Nearly Initializing...');
-        this.setupEventListeners();
-        this.navigate('welcome');
+        
+        // --- Firebase Initializer ---
         this.initFirebase();
-    },
 
-    setupEventListeners() {
-        // Nav items
-        document.querySelectorAll('.nav-item').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const view = btn.dataset.view;
-                this.navigate(view);
-                
-                // Update active state
-                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
+        // Check auth
+        const uid = localStorage.getItem('nearly_uid');
+        if (uid) {
+            this.state.isAuth = true;
+            // Optionally fetch real user from Firestore here
+        }
+
+        this.navigate(this.state.isAuth ? 'discovery' : 'welcome');
     },
 
     initFirebase() {
-        // Config placeholders (To be replaced by setup.sh or injected by GH Actions)
-        const firebaseConfig = {
-            apiKey: "FIREBASE_API_KEY",
-            authDomain: "FIREBASE_AUTH_DOMAIN",
-            projectId: "FIREBASE_PROJECT_ID",
-            storageBucket: "FIREBASE_STORAGE_BUCKET",
-            messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
-            appId: "FIREBASE_APP_ID"
-        };
-
-        if (firebaseConfig.apiKey !== "FIREBASE_API_KEY") {
-            firebase.initializeApp(firebaseConfig);
-            this.db = firebase.firestore();
-            console.log('Firebase Connected');
-        } else {
-            console.warn('Firebase Config missing. Run scripts/setup.sh or set GH Secrets.');
+        try {
+            if (typeof firebaseConfig !== 'undefined' || window.firebaseConfig) {
+                const config = window.firebaseConfig || firebaseConfig;
+                firebase.initializeApp(config);
+                window.db = firebase.firestore();
+                console.log('Firebase (Firestore) Connected.');
+            } else {
+                console.warn('Firebase Config missing. Running in Seeds/Offline mode.');
+            }
+        } catch (err) {
+            console.error('Firebase Init Error:', err);
         }
     },
 
-    navigate(viewId, viewData) {
-        const container = document.getElementById('main-view');
+    navigate(viewId, params) {
+        this.state.currentView = viewId;
+        const main = document.getElementById('main-view');
+        if (!main) return;
+
         const template = document.getElementById(`view-${viewId}`);
-        
         if (!template) {
-            console.error(`View template not found: ${viewId}`);
+            console.error('Template not found:', viewId);
             return;
         }
 
-        // Store view data to localStorage if it's meant for a specific view
-        if (viewId === 'profile-detail' && viewData) {
-            localStorage.setItem('last_viewed_user', viewData);
+        main.innerHTML = template.innerHTML;
+        this.updateNav(viewId);
+
+        // Handle URL Params for Public Profile
+        if (viewId === 'profile-detail' && params) {
+            localStorage.setItem('last_viewed_user', params);
         }
 
-        // Clone and inject template
-        container.innerHTML = '';
-        container.appendChild(template.content.cloneNode(true));
-        
-        this.state.currentView = viewId;
-        window.scrollTo(0, 0);
-
-        // UI Adjustments
-        const nav = document.getElementById('main-nav');
-        if (['discovery', 'connections', 'profile'].includes(viewId)) {
-            nav.classList.remove('hidden');
-        } else {
-            nav.classList.add('hidden');
-        }
-
-        // Dispatch view change event for specific logic (like refreshing discovery)
-        window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId, viewData } }));
+        // Trigger custom events for other modules
+        window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId, params } }));
     },
 
-    showToast(message, type = 'success') {
+    updateNav(viewId) {
+        const nav = document.getElementById('main-nav');
+        const hideOn = ['welcome', 'register', 'location', 'profile-setup'];
+        
+        if (hideOn.includes(viewId)) {
+            nav.classList.add('hidden');
+        } else {
+            nav.classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.view === viewId);
+            });
+        }
+    },
+
+    showToast(msg, type = 'success') {
         // Simple toast implementation
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        toast.textContent = message;
+        toast.textContent = msg;
         document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }, 100);
+        setTimeout(() => toast.remove(), 3000);
     }
 };
 
-// Start app
-window.addEventListener('DOMContentLoaded', () => app.init());
+window.addEventListener('DOMContentLoaded', () => {
+    app.init();
+
+    // Nav Listeners
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.onclick = () => app.navigate(btn.dataset.view);
+    });
+});
