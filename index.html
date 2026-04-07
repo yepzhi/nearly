@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css?v=1.5.1">
+    <script>window.NEOSYS_SITE_ID = 'nearly';</script>
+    <script src="/visitors/tracker.js"></script>
 </head>
 <body class="dark-theme">
     <!-- Initial Black Reveal (Yepzhi Style) -->
@@ -78,7 +80,15 @@
                     </select>
                 </div>
                 
-                <p class="security-note">✦ Ubicación aproximada ±250m por seguridad.</p>
+                <div class="form-group" style="text-align: left; margin-bottom: 24px;">
+                    <label>¿Qué tipo de perfil eres?</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="btn btn-silver active" id="type-talent" onclick="onboarding.setType('talent')">Talento</button>
+                        <button class="btn btn-silver" id="type-business" onclick="onboarding.setType('business')">Negocio</button>
+                    </div>
+                </div>
+                
+                <p class="security-note" id="welcome-privacy-note">✦ Ubicación aproximada ±250m por seguridad.</p>
                 
                 <div class="actions" style="margin-top: 24px;">
                     <button class="btn btn-primary btn-block" onclick="onboarding.saveLocationStep()">Descubrir Talento</button>
@@ -145,7 +155,11 @@
                         <h3 style="font-size: 14px; color: var(--gold); margin-bottom: 8px; text-transform: uppercase;">Experiencia</h3>
                         <p id="det-description" style="line-height: 1.6; color: var(--text-muted); margin-bottom: 30px;"></p>
                         
-                        <div class="actions">
+                        <div class="actions" id="det-actions-container">
+                            <!-- Injected: Maps Button (Business) OR Privacy Note (Talent) -->
+                        </div>
+                        
+                        <div class="actions" style="margin-top: 12px;">
                             <button class="btn btn-primary btn-block" onclick="profile.sendMessageToWhatsapp()">WhatsApp Directo ✦</button>
                         </div>
                     </div>

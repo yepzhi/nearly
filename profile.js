@@ -1,5 +1,6 @@
 /**
- * Nearly — Profile Detail & Connections Logic (v1.4)
+ * Nearly — Profile Detail & Connections Logic (v1.5)
+ * Elite Silver & Gold Edition
  */
 
 window.profile = {
@@ -9,10 +10,12 @@ window.profile = {
 
     init(userId) {
         console.log('Loading Profile Detail for:', userId);
-        this.fetchUser(userId);
+        this.fetchUser(userId || localStorage.getItem('last_viewed_user'));
     },
 
     async fetchUser(userId) {
+        if (!userId) return;
+
         // Attempt Firestore first
         try {
             if (window.db) {
@@ -39,37 +42,62 @@ window.profile = {
     },
 
     renderDetail(user) {
-        document.getElementById('det-alias').textContent = user.alias;
-        document.getElementById('det-category').textContent = user.category.toUpperCase();
-        document.getElementById('det-description').textContent = user.description;
+        const aliasEl = document.getElementById('det-alias');
+        const catEl = document.getElementById('det-category');
+        const descEl = document.getElementById('det-description');
+        const distEl = document.getElementById('det-distance');
+        
+        if (aliasEl) aliasEl.textContent = user.alias;
+        if (catEl) catEl.textContent = user.category.toUpperCase();
+        if (descEl) descEl.textContent = user.description;
         
         const distance = discovery.calculateDistance(user.location);
-        document.getElementById('det-distance').textContent = distance !== null ? `${distance.toFixed(1)} km` : '---';
+        if (distEl) distEl.textContent = distance !== null ? `${distance.toFixed(1)} km` : '---';
         
-        // Dynamic stats
-        document.getElementById('det-connections').textContent = user.rating || '4.5';
+        // Render Location Specific Actions (Business vs Talent)
+        this.renderLocationActions(user);
+    },
+
+    renderLocationActions(user) {
+        const container = document.getElementById('det-actions-container');
+        if (!container) return;
+
+        container.innerHTML = '';
         
-        const tagsContainer = document.getElementById('det-tags');
-        tagsContainer.innerHTML = '';
-        const labels = user.isAutoLoaded ? ['Establecimiento', 'Verificado', 'Pionero'] : ['Talento Local', 'Disponible', 'Cerca'];
-        labels.forEach(tag => {
-            const span = document.createElement('span');
-            span.className = 'category-badge';
-            span.style.background = 'rgba(255,255,255,0.05)';
-            span.style.color = 'var(--text-muted)';
-            span.textContent = tag;
-            tagsContainer.appendChild(span);
-        });
+        // Check if Business or Talent (Seeds are businesses by default)
+        const isBusiness = user.type === 'business' || user.isAutoLoaded;
+
+        if (isBusiness) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-silver btn-block';
+            btn.style.borderColor = 'var(--gold)';
+            btn.style.color = 'var(--gold)';
+            btn.innerHTML = '📍 Ir al Negocio (Maps)';
+            btn.onclick = () => {
+                const { latitude, longitude } = user.location;
+                const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+                window.open(url, '_blank');
+            };
+            container.appendChild(btn);
+        } else {
+            const p = document.createElement('p');
+            p.className = 'security-note';
+            p.style.textAlign = 'center';
+            p.style.width = '100%';
+            p.innerText = '✦ Ubicación aproximada ±250m por seguridad del talento.';
+            container.appendChild(p);
+        }
     },
 
     sendMessageToWhatsapp() {
         const user = this.state.currentProfile;
-        if (!user || !user.phone) {
+        if (!user || (!user.phone && !user.phone)) {
             app.showToast('Número no disponible', 'error');
             return;
         }
         
-        const cleanPhone = user.phone.replace(/\D/g, ''); // Ensure digits only
+        const phone = user.phone || user.phone;
+        const cleanPhone = phone.replace(/\D/g, ''); 
         const msg = `Hola ${user.alias}, te vi en Nearly y me interesa tu servicio.`;
         const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
@@ -78,7 +106,6 @@ window.profile = {
 
 window.addEventListener('viewChanged', (e) => {
     if (e.detail.viewId === 'profile-detail') {
-        const userId = localStorage.getItem('last_viewed_user');
-        if (userId) profile.init(userId);
+        profile.init(e.detail.params);
     }
 });

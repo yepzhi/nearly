@@ -22,20 +22,44 @@ window.onboarding = {
         }
     },
 
+    setType(val) {
+        this.state.tempType = val;
+        // Update UI
+        document.querySelectorAll('#type-talent, #type-business').forEach(b => b.classList.remove('active', 'btn-gold'));
+        document.querySelectorAll('#type-talent, #type-business').forEach(b => b.classList.add('btn-silver'));
+        
+        const btn = document.getElementById(`type-${val}`);
+        if (btn) {
+            btn.classList.remove('btn-silver');
+            btn.classList.add('active', 'btn-gold');
+        }
+
+        // Toggle privacy note
+        const note = document.getElementById('welcome-privacy-note');
+        if (note) {
+            note.style.opacity = (val === 'talent') ? '1' : '0.5';
+            note.innerText = (val === 'talent') 
+                ? '✦ Ubicación aproximada ±250m por seguridad.' 
+                : '✦ Los negocios muestran ubicación exacta para clientes.';
+        }
+    },
+
     setNeighborhood(val) {
         if (!val) return;
         const coords = this.state.neighborhoods[val];
-        // Apply random shift +/- 250m for security
-        const shiftLat = (Math.random() - 0.5) * 0.0045; 
-        const shiftLng = (Math.random() - 0.5) * 0.0045; 
+        // Apply random shift +/- 250m ONLY if it's a talent (defaulting to talent check)
+        const isTalent = this.state.tempType !== 'business';
+        const shiftLat = isTalent ? (Math.random() - 0.5) * 0.0045 : 0; 
+        const shiftLng = isTalent ? (Math.random() - 0.5) * 0.0045 : 0; 
         
         app.state.location = {
             latitude: coords.latitude + shiftLat,
             longitude: coords.longitude + shiftLng,
-            neighborhood: val
+            neighborhood: val,
+            type: this.state.tempType || 'talent'
         };
         
-        // Persist location locally immediately
+        // Persist location/type locally immediately
         localStorage.setItem('nearly_location', JSON.stringify(app.state.location));
     },
 
