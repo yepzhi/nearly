@@ -1,5 +1,5 @@
 /**
- * Nearly — Core App Logic (v1.5)
+ * Nearly — Core App Logic (v1.6.0)
  * Elite Silver & Gold Edition
  */
 

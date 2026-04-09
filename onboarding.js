@@ -1,5 +1,5 @@
 /**
- * Nearly — Onboarding Elite v1.5
+ * Nearly — Onboarding Elite v1.6.0
  * Localizing Talent & Services in Hermosillo
  */
 

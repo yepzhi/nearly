@@ -1,5 +1,5 @@
 /**
- * Nearly — Discovery & Feed Logic (v1.5)
+ * Nearly — Discovery & Feed Logic (v1.6.0)
  */
 
 window.discovery = {
@@ -109,16 +109,32 @@ window.discovery = {
         const distLabel = distance !== null ? `${distance.toFixed(1)} km` : '---';
         const initials = user.alias.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-        div.innerHTML = `
-            <div class="card-rating">
-                <svg width="12" height="12" fill="var(--gold)" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                ${user.rating || '4.5'}
-            </div>
-            <div class="card-avatar">${initials}</div>
-            <div class="card-title">${user.alias}</div>
-            <div class="card-cat">${user.category}</div>
-            <div class="card-dist">A ${distLabel} de ti</div>
-        `;
+        const rating = document.createElement('div');
+        rating.className = 'card-rating';
+        rating.innerHTML = `<svg width="12" height="12" fill="var(--gold)" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> `;
+        rating.appendChild(document.createTextNode(user.rating || '4.5'));
+
+        const avatar = document.createElement('div');
+        avatar.className = 'card-avatar';
+        avatar.textContent = initials;
+
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = user.alias;
+
+        const cat = document.createElement('div');
+        cat.className = 'card-cat';
+        cat.textContent = user.category;
+
+        const dist = document.createElement('div');
+        dist.className = 'card-dist';
+        dist.textContent = `A ${distLabel} de ti`;
+
+        div.appendChild(rating);
+        div.appendChild(avatar);
+        div.appendChild(title);
+        div.appendChild(cat);
+        div.appendChild(dist);
 
         return div;
     },
