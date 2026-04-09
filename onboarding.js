@@ -63,6 +63,50 @@ window.onboarding = {
         localStorage.setItem('nearly_location', JSON.stringify(app.state.location));
     },
 
+    requestPrecisionLocation() {
+        if (!navigator.geolocation) {
+            app.showToast('Tu navegador no soporta ubicación.', 'warning');
+            return;
+        }
+
+        app.showToast('Solicitando señal GPS... 🛰️', 'success');
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const isTalent = this.state.tempType !== 'business';
+                
+                // Privacy Shift for talents
+                const shiftLat = isTalent ? (Math.random() - 0.5) * 0.0045 : 0; 
+                const shiftLng = isTalent ? (Math.random() - 0.5) * 0.0045 : 0; 
+
+                app.state.location = {
+                    latitude: latitude + shiftLat,
+                    longitude: longitude + shiftLng,
+                    neighborhood: 'GPS',
+                    type: this.state.tempType || 'talent'
+                };
+                
+                localStorage.setItem('nearly_location', JSON.stringify(app.state.location));
+                app.showToast('📍 Ubicación vinculada con éxito', 'success');
+                
+                // Highlight select for feedback
+                const sel = document.getElementById('welcome-neighborhood');
+                if (sel) {
+                    sel.innerHTML = `<option value="gps">📍 Mi ubicación actual</option>`;
+                    sel.value = "gps";
+                }
+
+                setTimeout(() => app.navigate('discovery'), 1000);
+            },
+            (err) => {
+                console.error(err);
+                app.showToast('No pudimos obtener tu ubicación.', 'error');
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
+    },
+
     saveLocationStep() {
         if (!app.state.location) {
             app.showToast('Por favor selecciona una zona', 'warning');
